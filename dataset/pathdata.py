@@ -1,6 +1,7 @@
 import logging
 import math
 import os
+import csv
 
 import numpy as np
 from PIL import Image
@@ -10,15 +11,57 @@ from torchvision import transforms
 from randaugment import RandAugmentMC
 
 logger = logging.getLogger(__name__)
+imagesize = 96
 
-def get_path(args, root):
-    images = []
-    with os.scandir(root) as it:
+path_mean = (0.5, 0.5, 0.5)
+path_std = (0.5, 0.5, 0.5)
+
+def tensorfy_data(path):
+    imagepath = os.path.join(path, "images")
+    valpath = os.path.join(path, "val.csv")
+    # read through images and store in TensorDataset
+    images = {}
+    with os.scandir(imagepath) as it:
         for entry in it:
             if not entry.name.startswith('.') and entry.is_file():
-                images.append(transforms.functional.pil_to_tensor(Image.open(entry.path)))
+                img = Image.open(entry.path)
+                images[entry.name] = [transforms.functional.pil_to_tensor(img)]
+    with open(valpath, 'r') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            if not row['filename'] in images:
+                raise LookupError('Labels not correct')
+            images[row['filename']].append(row['label'])
+    samples, targets = [], []
+    for filename in images:
+        image, label = images[filename]
+        samples.append(image)
+        targets.append(label)
+    base_dataset = torch.utils.data.TensorDataset(torch.stack(samples), torch.stack(targets))
+    return base_dataset
 
-    return
+
+def get_path(args, path):
+    base_dataset = tensorfy_data(os.path.join(path, "Unlabeled")
+    # Transformations
+    transform_labeled = transforms.Compose([
+        transforms.RandomHorizontalFlip(),
+        transforms.RandomCrop(size=imagesize,
+                              padding=int(imagesize*0.125),
+                              padding_mode='reflect'),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=path_mean, std=path_std)
+    ])
+    transform_val = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize(mean=path_mean, std=path_std)
+    ])
+    
+    # Index split
+    train_labeled_idxs, train_unlabeled_idxs = x_u_split(
+        args, base_dataset.targets)
+
+
 
 def x_u_split(args, labels):
     label_per_class = args.num_labeled // args.num_classes
@@ -43,7 +86,6 @@ def x_u_split(args, labels):
 
 class TransformFixMatch(object):
     def __init__(self, mean, std):
-        imagesize = 96
         self.weak = transforms.Compose([
             transforms.RandomHorizontalFlip(),
             transforms.RandomCrop(size=imagesize,
@@ -65,7 +107,9 @@ class TransformFixMatch(object):
         return self.normalize(weak), self.normalize(strong)
 
 def main():
-    get_path(None, '/data/PathData/PathData/Pcam/Unlabeled/images/')
+    get_path(None, '/data/PathData/PathData/Pcam/Unlabeled/images/', '/data/PathData/PathData/Pcam/Unlabeled/images/')
 
 if __name__ == '__main__':
     main()
+
+DATASET_GETTERS = {'path': get_path}
