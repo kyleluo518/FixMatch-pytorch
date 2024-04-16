@@ -2,11 +2,13 @@ import logging
 import math
 import os
 import csv
+import torch
 
 import numpy as np
 from PIL import Image
 from torchvision import datasets
 from torchvision import transforms
+from torch.utils.data import Subset
 
 from randaugment import RandAugmentMC
 
@@ -16,9 +18,9 @@ imagesize = 96
 path_mean = (0.5, 0.5, 0.5)
 path_std = (0.5, 0.5, 0.5)
 
-def tensorfy_data(path):
+def tensorfy_data(path, test=False):
     imagepath = os.path.join(path, "images")
-    valpath = os.path.join(path, "val.csv")
+    valpath = os.path.join(path, "test.csv" if test else "val.csv")
     # read through images and store in TensorDataset
     images = {}
     with os.scandir(imagepath) as it:
@@ -42,7 +44,8 @@ def tensorfy_data(path):
 
 
 def get_path(args, path):
-    base_dataset = tensorfy_data(os.path.join(path, "Unlabeled")
+    base_dataset = tensorfy_data(os.path.join(path, "Unlabeled"))
+    test_dataset = tensorfy_data(os.path.join(path, "Test"))
     # Transformations
     transform_labeled = transforms.Compose([
         transforms.RandomHorizontalFlip(),
@@ -56,11 +59,14 @@ def get_path(args, path):
         transforms.ToTensor(),
         transforms.Normalize(mean=path_mean, std=path_std)
     ])
-    
+    transform_fixmatch = TransformFixMatch(mean=path_mean, std=path_std)
     # Index split
     train_labeled_idxs, train_unlabeled_idxs = x_u_split(
         args, base_dataset.targets)
-
+    train_labeled_dataset = transform_labeled(Subset(base_dataset, train_labeled_idxs))
+    train_unlabeled_dataset = transform_fixmatch(Subset(base_dataset, train_unlabeled_idxs))
+    test_dataset = transform_val(test_dataset)
+    return train_labeled_dataset, train_unlabeled_dataset, test_dataset
 
 
 def x_u_split(args, labels):
