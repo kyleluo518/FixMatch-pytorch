@@ -49,6 +49,7 @@ def get_path(args, path):
     test_dataset = tensorfy_data(os.path.join(path, "Test"), test=True)
     # Transformations
     transform_labeled = transforms.Compose([
+        transforms.ToPILImage(),
         transforms.RandomHorizontalFlip(),
         transforms.RandomCrop(size=imagesize,
                               padding=int(imagesize*0.125),
@@ -94,11 +95,13 @@ def x_u_split(args, labels):
 class TransformFixMatch(object):
     def __init__(self, mean, std):
         self.weak = transforms.Compose([
+            transforms.ToPILImage(),
             transforms.RandomHorizontalFlip(),
             transforms.RandomCrop(size=imagesize,
                                   padding=int(imagesize*0.125),
                                   padding_mode='reflect')])
         self.strong = transforms.Compose([
+            transforms.ToPILImage(),
             transforms.RandomHorizontalFlip(),
             transforms.RandomCrop(size=imagesize,
                                   padding=int(imagesize*0.125),
