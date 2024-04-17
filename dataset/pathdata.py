@@ -27,7 +27,7 @@ def tensorfy_data(path, test=False):
         for entry in it:
             if not entry.name.startswith('.') and entry.is_file():
                 img = Image.open(entry.path)
-                images[entry.name] = [transforms.functional.pil_to_tensor(img)]
+                images[entry.name] = [transforms.functional.pil_to_tensor(img).float()]
     with open(valpath, 'r') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
@@ -58,7 +58,7 @@ def get_path(args, path):
         transforms.Normalize(mean=path_mean, std=path_std)
     ])
     transform_val = transforms.Compose([
-        transforms.ToTensor(),
+        # transforms.ToTensor(),
         transforms.Normalize(mean=path_mean, std=path_std)
     ])
     transform_fixmatch = TransformFixMatch(mean=path_mean, std=path_std)
@@ -69,7 +69,7 @@ def get_path(args, path):
         torch.stack([transform_labeled(base_dataset[x][0]) for x in train_labeled_idxs]), 
         torch.stack([base_dataset[x][1] for x in train_labeled_idxs]))
     train_unlabeled_dataset = torch.utils.data.TensorDataset(
-        torch.stack([transform_fixmatch(base_dataset[x][0]) for x in train_unlabeled_idxs]),
+        torch.stack([torch.stack(transform_fixmatch(base_dataset[x][0])) for x in train_unlabeled_idxs]),
         torch.stack([base_dataset[x][1] for x in train_unlabeled_idxs]))
     test_dataset = torch.utils.data.TensorDataset(
         torch.stack([transform_val(x) for x, y in test_dataset]),
