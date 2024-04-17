@@ -65,9 +65,15 @@ def get_path(args, path):
     # Index split
     train_labeled_idxs, train_unlabeled_idxs = x_u_split(
         args, [x[1] for x in base_dataset])
-    train_labeled_dataset = torch.stack([transform_labeled(base_dataset[x]) for x in train_labeled_idxs])
-    train_unlabeled_dataset = torch.stack([transform_fixmatch(base_dataset[x]) for x in train_unlabeled_idxs])
-    test_dataset = torch.stack([transform_val(x) for x in test_dataset])
+    train_labeled_dataset = torch.utils.data.TensorDataset(
+        torch.stack([transform_labeled(base_dataset[x][0]) for x in train_labeled_idxs]), 
+        torch.stack([base_dataset[x][1] for x in train_labeled_idxs]))
+    train_unlabeled_dataset = torch.utils.data.TensorDataset(
+        torch.stack([transform_fixmatch(base_dataset[x][0]) for x in train_unlabeled_idxs]),
+        torch.stack([base_dataset[x][1] for x in train_unlabeled_idxs]))
+    test_dataset = torch.utils.data.TensorDataset(
+        torch.stack([transform_val(x) for x, y in test_dataset]),
+        torch.stack([y for x, y in test_dataset]))
     return train_labeled_dataset, train_unlabeled_dataset, test_dataset
 
 
