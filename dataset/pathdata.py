@@ -31,11 +31,12 @@ def tensorfy_data(path, test=False):
     with open(valpath, 'r') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
-            if not row['filename'] in images:
-                raise LookupError('Labels not correct')
+            if not row['filename'] in images: continue
             images[row['filename']].append(row['label'])
     samples, targets = [], []
     for filename in images:
+        if len(images[filename]) != 2:
+            raise ValueError("pathdata: labels must be one to one with image files")
         image, label = images[filename]
         samples.append(image)
         targets.append(label)
