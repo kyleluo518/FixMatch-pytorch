@@ -64,9 +64,9 @@ def get_path(args, path):
     # Index split
     train_labeled_idxs, train_unlabeled_idxs = x_u_split(
         args, [x[1] for x in base_dataset])
-    train_labeled_dataset = transform_labeled(Subset(base_dataset, train_labeled_idxs))
-    train_unlabeled_dataset = transform_fixmatch(Subset(base_dataset, train_unlabeled_idxs))
-    test_dataset = transform_val(test_dataset)
+    train_labeled_dataset = torch.stack([transform_labeled(base_dataset[x]) for x in train_labeled_idxs])
+    train_unlabeled_dataset = torch.stack([transform_fixmatch(base_dataset[x]) for x in train_unlabeled_idxs])
+    test_dataset = torch.stack([transform_val(x) for x in test_dataset])
     return train_labeled_dataset, train_unlabeled_dataset, test_dataset
 
 
