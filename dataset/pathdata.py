@@ -63,7 +63,7 @@ def get_path(args, path):
     transform_fixmatch = TransformFixMatch(mean=path_mean, std=path_std)
     # Index split
     train_labeled_idxs, train_unlabeled_idxs = x_u_split(
-        args, base_dataset.targets)
+        args, [x[1] for x in base_dataset])
     train_labeled_dataset = transform_labeled(Subset(base_dataset, train_labeled_idxs))
     train_unlabeled_dataset = transform_fixmatch(Subset(base_dataset, train_unlabeled_idxs))
     test_dataset = transform_val(test_dataset)
