@@ -39,8 +39,8 @@ def tensorfy_data(path, test=False):
             raise ValueError("pathdata: labels must be one to one with image files")
         image, label = images[filename]
         samples.append(image)
-        targets.append(label)
-    base_dataset = torch.utils.data.TensorDataset(torch.stack(samples), torch.stack(targets))
+        targets.append(int(label))
+    base_dataset = torch.utils.data.TensorDataset(torch.stack(samples), torch.Tensor(targets))
     return base_dataset
 
 
