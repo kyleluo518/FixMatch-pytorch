@@ -215,7 +215,7 @@ def main():
     labeled_dataset, unlabeled_dataset, test_dataset = DATASET_GETTERS[args.dataset](
         args, '/data/PathData/PathData/Pcam')
 
-    print(type(labeled_dataset))
+    print("uld is this long:", len(unlabeled_dataset))
     if args.local_rank == 0:
         torch.distributed.barrier()
 
@@ -234,6 +234,8 @@ def main():
         batch_size=args.batch_size*args.mu,
         num_workers=args.num_workers,
         drop_last=True)
+    print(args.batch_size * args.mu)
+    print("in main, ultl is ", len(unlabeled_trainloader))
 
     test_loader = DataLoader(
         test_dataset,
@@ -322,6 +324,8 @@ def train(args, labeled_trainloader, unlabeled_trainloader, test_loader,
         labeled_trainloader.sampler.set_epoch(labeled_epoch)
         unlabeled_trainloader.sampler.set_epoch(unlabeled_epoch)
 
+    print("labeled", len(labeled_trainloader))
+    print("unlabeled", len(unlabeled_trainloader))
     labeled_iter = iter(labeled_trainloader)
     unlabeled_iter = iter(unlabeled_trainloader)
 

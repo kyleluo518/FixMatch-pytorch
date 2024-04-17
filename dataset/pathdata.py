@@ -68,9 +68,9 @@ def get_path(args, path):
     train_labeled_dataset = torch.utils.data.TensorDataset(
         torch.stack([transform_labeled(base_dataset[x][0]) for x in train_labeled_idxs]), 
         torch.stack([base_dataset[x][1] for x in train_labeled_idxs]))
-    train_unlabeled_dataset = [
+    train_unlabeled_dataset = list(zip(
         [transform_fixmatch(base_dataset[x][0]) for x in train_unlabeled_idxs],
-        torch.stack([base_dataset[x][1] for x in train_unlabeled_idxs])]
+        [base_dataset[x][1] for x in train_unlabeled_idxs]))
     test_dataset = torch.utils.data.TensorDataset(
         torch.stack([transform_val(x) for x, y in test_dataset]),
         torch.stack([y for x, y in test_dataset]))
