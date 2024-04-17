@@ -46,7 +46,7 @@ def tensorfy_data(path, test=False):
 
 def get_path(args, path):
     base_dataset = tensorfy_data(os.path.join(path, "Unlabeled"))
-    test_dataset = tensorfy_data(os.path.join(path, "Test"))
+    test_dataset = tensorfy_data(os.path.join(path, "Test"), test=True)
     # Transformations
     transform_labeled = transforms.Compose([
         transforms.RandomHorizontalFlip(),
