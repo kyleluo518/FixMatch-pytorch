@@ -10,7 +10,7 @@ from torchvision import datasets
 from torchvision import transforms
 from torch.utils.data import Subset
 
-from randaugment import RandAugmentMC
+from .randaugment import RandAugmentMC
 
 logger = logging.getLogger(__name__)
 imagesize = 96
