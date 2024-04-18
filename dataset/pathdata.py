@@ -40,7 +40,7 @@ def tensorfy_data(path, test=False):
         image, label = images[filename]
         samples.append(image)
         targets.append(int(label))
-    base_dataset = torch.utils.data.TensorDataset(torch.stack(samples), torch.Tensor(targets))
+    base_dataset = torch.utils.data.TensorDataset(torch.stack(samples), torch.LongTensor(targets))
     return base_dataset
 
 
