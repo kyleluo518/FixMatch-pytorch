@@ -19,6 +19,7 @@ from tqdm import tqdm
 
 from dataset.pathdata import DATASET_GETTERS
 from utils import AverageMeter, accuracy
+from torch.profiler import profile, ProfilerActivity
 
 logger = logging.getLogger(__name__)
 best_acc = 0
@@ -306,8 +307,10 @@ def main():
     logger.info(f"  Total optimization steps = {args.total_steps}")
 
     model.zero_grad()
-    train(args, labeled_trainloader, unlabeled_trainloader, test_loader,
+    with profile(activities=[ProfilerActivity.CUDA]) as prof:
+        train(args, labeled_trainloader, unlabeled_trainloader, test_loader,
           model, optimizer, ema_model, scheduler)
+    print(prof.key_averages().table(sort_by="self_cuda_memory_usage", row_limit=10))
 
 
 def train(args, labeled_trainloader, unlabeled_trainloader, test_loader,
@@ -471,7 +474,6 @@ def test(args, test_loader, model, epoch):
     data_time = AverageMeter()
     losses = AverageMeter()
     top1 = AverageMeter()
-    top5 = AverageMeter()
     end = time.time()
 
     if not args.no_progress:
@@ -488,27 +490,24 @@ def test(args, test_loader, model, epoch):
             outputs = model(inputs)
             loss = F.cross_entropy(outputs, targets)
 
-            prec1, prec5 = accuracy(outputs, targets, topk=(1, 5))
+            prec1 = accuracy(outputs, targets)[0]
             losses.update(loss.item(), inputs.shape[0])
             top1.update(prec1.item(), inputs.shape[0])
-            top5.update(prec5.item(), inputs.shape[0])
             batch_time.update(time.time() - end)
             end = time.time()
             if not args.no_progress:
-                test_loader.set_description("Test Iter: {batch:4}/{iter:4}. Data: {data:.3f}s. Batch: {bt:.3f}s. Loss: {loss:.4f}. top1: {top1:.2f}. top5: {top5:.2f}. ".format(
+                test_loader.set_description("Test Iter: {batch:4}/{iter:4}. Data: {data:.3f}s. Batch: {bt:.3f}s. Loss: {loss:.4f}. top1: {top1:.2f}. ".format(
                     batch=batch_idx + 1,
                     iter=len(test_loader),
                     data=data_time.avg,
                     bt=batch_time.avg,
                     loss=losses.avg,
                     top1=top1.avg,
-                    top5=top5.avg,
                 ))
         if not args.no_progress:
             test_loader.close()
 
     logger.info("top-1 acc: {:.2f}".format(top1.avg))
-    logger.info("top-5 acc: {:.2f}".format(top5.avg))
     return losses.avg, top1.avg
 
 
